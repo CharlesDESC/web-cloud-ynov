@@ -46,6 +46,7 @@
 			"reactCompiler": true,
 			"baseUrl": "/web-cloud-ynov"
 		},
+
 		"extra": {
 			"router": {},
 			"eas": {
