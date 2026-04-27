@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x, 23.x, 24.x]
+        node-version: [24.x]
 
     steps:
       - name: Setup repo
@@ -29,6 +29,36 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v3
 
       - name: Build web app
         run: npm run predeploy
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          # Upload entire repository
+          path: dist
+
+  # Deploy job
+  deploy:
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write # to deploy to Pages
+      id-token: write # to verify the deployment originates from a source
+
+    # Add a dependency to the build job
+    needs: build
+
+    # Specify runner + deployment step
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
