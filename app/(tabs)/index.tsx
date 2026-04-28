@@ -1,98 +1,209 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from "react";
+import { StyleSheet, Text, View, TextInput, Button, Platform } from "react-native";
+import { signup } from "../../auth_signup_password";
+import { signin } from "../../auth_signin_password";
+import { sendPhoneCode, verifyPhoneCode } from "../../auth_phone";
+import { signinWithGithub } from "../../auth_github_signin_popup";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+function Toast({ message, type }: { message: string; type: "success" | "error" }) {
+  return (
+    <View style={[styles.toast, type === "success" ? styles.toastSuccess : styles.toastError]}>
+      <Text style={styles.toastText}>{message}</Text>
+    </View>
+  );
+}
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // 1. Validation
+  const validateForm = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showToast("Format d'email invalide", "error");
+      return false;
+    }
+    if (password.length < 6) {
+      showToast("Le mot de passe doit contenir au moins 6 caractères", "error");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSignup = async () => {
+    if (!validateForm()) return;
+    try {
+      await signup(email, password);
+      showToast("Compte créé avec succès !", "success");
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors de l'inscription", "error");
+    }
+  };
+
+  const handleSignin = async () => {
+    if (!validateForm()) return;
+    try {
+      await signin(email, password);
+      showToast("Connexion réussie !", "success");
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors de la connexion", "error");
+    }
+  };
+
+  // 3. Phone auth
+  const handleSendCode = async () => {
+    if (!phoneNumber) {
+      showToast("Entrez un numéro de téléphone", "error");
+      return;
+    }
+    try {
+      const result = await sendPhoneCode(phoneNumber);
+      setConfirmationResult(result);
+      showToast("Code envoyé !", "success");
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors de l'envoi du code", "error");
+    }
+  };
+
+  const handleGithubSignin = async () => {
+    try {
+      await signinWithGithub();
+      showToast("Connexion GitHub réussie !", "success");
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors de la connexion GitHub", "error");
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!verificationCode) {
+      showToast("Entrez le code reçu", "error");
+      return;
+    }
+    try {
+      await verifyPhoneCode(confirmationResult, verificationCode);
+      showToast("Connexion par téléphone réussie !", "success");
+    } catch (error: any) {
+      showToast(error.message || "Code invalide", "error");
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* 2. Toaster */}
+      {toast && <Toast message={toast.message} type={toast.type} />}
+
+      {/* Recaptcha container (web uniquement) */}
+      {Platform.OS === "web" && <View nativeID="recaptcha-container" />}
+
+      <Text style={styles.title}>Email / Mot de passe</Text>
+
+      <Text>Email</Text>
+      <TextInput
+        style={styles.input}
+        onChangeText={setEmail}
+        value={email}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <Text>Password</Text>
+      <TextInput
+        style={styles.input}
+        onChangeText={setPassword}
+        value={password}
+        secureTextEntry={true}
+      />
+      <Button title="Sign Up!" onPress={handleSignup} />
+      <Button title="Sign In!" onPress={handleSignin} />
+
+      <View style={styles.separator} />
+
+      <Text style={styles.title}>Providers externes</Text>
+      <Button title="Se connecter avec GitHub" onPress={handleGithubSignin} />
+
+      <View style={styles.separator} />
+
+      <Text style={styles.title}>Téléphone</Text>
+
+      <Text>Numéro de téléphone (+33...)</Text>
+      <TextInput
+        style={styles.input}
+        onChangeText={setPhoneNumber}
+        value={phoneNumber}
+        keyboardType="phone-pad"
+      />
+      <Button title="Envoyer le code" onPress={handleSendCode} />
+
+      {confirmationResult && (
+        <>
+          <Text>Code de vérification</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setVerificationCode}
+            value={verificationCode}
+            keyboardType="number-pad"
+          />
+          <Button title="Vérifier le code" onPress={handleVerifyCode} />
+        </>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  input: {
+    height: 40,
+    width: 250,
+    margin: 8,
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 5,
+  },
+  separator: {
+    height: 1,
+    width: "100%",
+    backgroundColor: "#ccc",
+    marginVertical: 20,
+  },
+  toast: {
+    position: "absolute",
+    top: 60,
+    left: 20,
+    right: 20,
+    padding: 12,
+    borderRadius: 8,
+    zIndex: 999,
+  },
+  toastSuccess: {
+    backgroundColor: "#4CAF50",
+  },
+  toastError: {
+    backgroundColor: "#f44336",
+  },
+  toastText: {
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "bold",
   },
 });
