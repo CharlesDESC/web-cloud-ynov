@@ -23,7 +23,7 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     const auth = getAuth();
     await signOut(auth);
-    router.replace("/login");
+    // onAuthStateChanged détecte la déconnexion et redirige
   };
 
   if (loading) {

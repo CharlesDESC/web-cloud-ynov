@@ -1,30 +1,46 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useRouter, usePathname } from "expo-router";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import "../firebaseConfig";
 
 const LINKS = [
-  { label: "Accueil", href: "/" },
-  { label: "Connexion", href: "/login" },
-  { label: "Profil", href: "/profile" },
+  { label: "Accueil", href: "/", requiresAuth: false },
+  { label: "Connexion", href: "/login", requiresAuth: false },
+  { label: "Profil", href: "/profile", requiresAuth: true },
 ];
 
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+    });
+    return unsub;
+  }, []);
 
   return (
     <View style={styles.nav}>
-      {LINKS.map((link) => (
-        <Pressable
-          key={link.href}
-          onPress={() => router.push(link.href as any)}
-          style={styles.link}
-        >
-          <Text style={[styles.linkText, pathname === link.href && styles.active]}>
-            {link.label}
-          </Text>
-        </Pressable>
-      ))}
+      {LINKS.map((link) => {
+        const disabled = link.requiresAuth && !isLoggedIn;
+        const isActive = pathname === link.href;
+        return (
+          <Pressable
+            key={link.href}
+            onPress={() => router.push(link.href as any)}
+            style={[styles.link, isActive && styles.linkActive]}
+            disabled={disabled}
+          >
+            <Text style={[styles.linkText, isActive && styles.textActive, disabled && styles.textDisabled]}>
+              {link.label}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -43,13 +59,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
+  linkActive: {
+    borderBottomColor: "#4f9cf9",
+  },
   linkText: {
     color: "#aaa",
     fontSize: 14,
     fontWeight: "600",
   },
-  active: {
+  textActive: {
     color: "#fff",
-    borderBottomColor: "#4f9cf9",
+  },
+  textDisabled: {
+    color: "#444",
   },
 });
