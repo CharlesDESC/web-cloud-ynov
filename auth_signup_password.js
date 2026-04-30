@@ -1,14 +1,13 @@
 import "./firebaseConfig";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 const auth = getAuth();
 
-export const signup = (email, password) => {
+export const signup = (email, password, name) => {
   return createUserWithEmailAndPassword(auth, email, password).then(
-    (userCredential) => {
+    async (userCredential) => {
       const user = userCredential.user;
-      console.log(user);
-      console.log("signup success");
+      if (name) await updateProfile(user, { displayName: name });
       return user;
     }
   );
