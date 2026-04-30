@@ -8,12 +8,14 @@ import "../../firebaseConfig";
 export default function ProfileScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const auth = getAuth();
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(auth, (u) => {
       setLoading(false);
-      if (!user) router.replace("/login");
+      if (!u) router.replace("/login");
+      else setUser(u);
     });
     return unsub;
   }, []);
@@ -37,6 +39,13 @@ export default function ProfileScreen() {
       <Navbar />
       <View style={styles.content}>
         <Text style={styles.text}>Ici s'affichera prochainement votre profil</Text>
+        <View style={styles.infoBox}>
+          {user?.isAnonymous ? (
+            <Text style={styles.infoAnonymous}>Connecté anonymement</Text>
+          ) : (
+            <Text style={styles.infoEmail}>{user?.email}</Text>
+          )}
+        </View>
         <Pressable style={styles.btn} onPress={handleLogout}>
           <Text style={styles.btnText}>Se déconnecter</Text>
         </Pressable>
@@ -60,6 +69,17 @@ const styles = StyleSheet.create({
     marginBottom: 48,
     textAlign: "center",
   },
+  infoBox: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  infoEmail: { fontSize: 15, color: "#1a1a2e", fontWeight: "600" },
+  infoAnonymous: { fontSize: 15, color: "#888", fontStyle: "italic" },
   btn: {
     backgroundColor: "#e53935",
     paddingVertical: 12,
