@@ -14,6 +14,10 @@ https://charlesdesc06.github.io/web-cloud-ynov/
 - Facebook
 - Connexion anonyme
 
+## Build EAS
+
+![EAS Build](image.png)
+
 ## Comptes de test
 
 | Methode | Identifiant | Code |
