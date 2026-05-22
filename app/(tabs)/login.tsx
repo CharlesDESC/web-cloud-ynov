@@ -10,12 +10,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Navbar } from "@/components/Navbar";
-import { signup } from "../../auth_signup_password";
-import { signin } from "../../auth_signin_password";
-import { sendPhoneCode, verifyPhoneCode } from "../../auth_phone";
-import { signinWithGithub } from "../../auth_github_signin_popup";
-import { signinWithFacebook } from "../../auth_facebook";
-import { signinAnonymously } from "../../auth_anonymous";
+import { signup, signin } from "@/services/auth/password";
+import { sendPhoneCode, verifyPhoneCode } from "@/services/auth/phone";
+import { signinWithGithub } from "@/services/auth/github";
+import { signinWithFacebook } from "@/services/auth/facebook";
+import { signinAnonymously } from "@/services/auth/anonymous";
 
 function Toast({ message, type }: { message: string; type: "success" | "error" }) {
   return (

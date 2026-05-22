@@ -12,6 +12,7 @@ export default function TabLayout() {
       <Tabs.Screen name="explore" />
       <Tabs.Screen name="login" />
       <Tabs.Screen name="profile" />
+      <Tabs.Screen name="newpost" />
     </Tabs>
   );
 }

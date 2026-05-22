@@ -1,4 +1,4 @@
-import "./firebaseConfig";
+import "@/firebaseConfig";
 import { getAuth, signInAnonymously } from "firebase/auth";
 
 const auth = getAuth();
